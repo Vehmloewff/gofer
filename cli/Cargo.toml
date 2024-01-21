@@ -9,5 +9,6 @@ path = "main.rs"
 
 [dependencies]
 clap = { version = "4.4.7", features = ["derive"] }
+decompress = "0.3.0"
 thiserror = "1.0.50"
 tokio = { version = "1.33.0", features = ["full"] }

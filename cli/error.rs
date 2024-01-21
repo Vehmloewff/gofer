@@ -10,6 +10,15 @@ pub enum CliError {
 
 	#[error("Resolver could not be spawned from {0}")]
 	InvalidResolver(String),
+
+	#[error("Subprocess \"{program}\" encountered an unexpected error: {message}")]
+	UnexpectedProcessFailure { program: String, message: String },
+
+	#[error("Failed to resolve using resolver \"{0}\"")]
+	ResolverErrored(String),
+
+	#[error("Failed to decompress \"{id}\": {message}")]
+	DecompressError { id: String, message: String },
 }
 
 pub type Result<T> = std::result::Result<T, CliError>;

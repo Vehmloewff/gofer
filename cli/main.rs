@@ -2,6 +2,7 @@ mod add;
 mod error;
 mod remove;
 mod resolver;
+mod writer;
 
 use clap::{Parser, Subcommand};
 use error::{CliError, Result};
@@ -25,7 +26,7 @@ enum CliSubCommand {
 	#[command()]
 	Add {
 		/// The name of the package to install
-		name: String,
+		name: Vec<String>,
 	},
 	/// Remove a package
 	#[command()]
