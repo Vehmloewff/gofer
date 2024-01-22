@@ -1,3 +1,3 @@
-# Yet Another Package Manager (YAPM)
+# Gofer
 
-Downloads a package from Github releases.
+Install packages from popular hosts
