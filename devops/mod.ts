@@ -35,7 +35,7 @@ export async function build(): Promise<void> {
 		await ioUtils.copy(compressedReader, targetFile)
 	}
 
-	await dtils.sh(`gh release upload ${tag} ${distDir}/gofer-*.tar.gz --clobber`)
+	await dtils.sh(`gh release upload ${tag} ${distDir}/gofer-*.tar.gz --clobber`, { env: Deno.env.toObject() })
 }
 
 async function getLatestTag() {
