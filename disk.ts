@@ -18,7 +18,7 @@ export async function saveToDisk(stream: ReadableStream<Uint8Array>, path: strin
 			const path = pathUtils.join(destinationPath, entry.fileName)
 			const dir = pathUtils.dirname(path)
 
-			if (!await dtils.exists(dir)) await Deno.mkdir(dir)
+			if (!await dtils.exists(dir)) await Deno.mkdir(dir, { recursive: true })
 			if (entry.type === 'directory') continue
 
 			const file = await Deno.open(path, { create: true, write: true })
@@ -33,6 +33,9 @@ export async function saveToDisk(stream: ReadableStream<Uint8Array>, path: strin
 	} else {
 		const entryName = path === '/' ? 'unknown' : pathUtils.basename(path)
 		const fileName = pathUtils.join(destinationPath, entryName)
+		const dirName = pathUtils.dirname(fileName)
+
+		if (!await dtils.exists(dirName)) await Deno.mkdir(dirName, { recursive: true })
 		const file = await Deno.open(fileName, { create: true, write: true })
 
 		await ioUtils.copy(streamUtils.readerFromStreamReader(body.getReader()), file)

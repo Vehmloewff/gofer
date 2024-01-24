@@ -1,8 +1,9 @@
-import { pathUtils } from './deps.ts'
+import { dtils, pathUtils } from './deps.ts'
 import { linkBinFiles, removeBinFiles } from './link_bin.ts'
 import { BinOwners } from './bin_owners.ts'
 import { selectHost } from './host.ts'
 import { saveToDisk } from './disk.ts'
+import { checkBinInPath } from './link_bin.ts'
 
 export interface PackageParams {
 	packageName: PackageName
@@ -22,8 +23,14 @@ export async function installPackage(params: InstallPackageParams): Promise<void
 	const version = params.packageName.version || await host.getLatestVersion(params.packageName)
 	if (!version) throw new Error(`no versions have been published for package, "${params.packageName.normalized}"`)
 
+	console.log(`downloading version ${version}`)
 	const { stream, name } = await host.download(params.packageName, version)
-	await saveToDisk(stream, name, pathUtils.join(params.packagesDir, 'src', params.packageName.normalized))
+
+	await removeBinFiles({ binOwners: params.binOwners, packageName: params.packageName, packagesDir: params.packagesDir })
+	const srcPath = pathUtils.join(params.packagesDir, 'src', params.packageName.normalized)
+
+	if (await dtils.exists(srcPath)) await Deno.remove(srcPath, { recursive: true })
+	await saveToDisk(stream, name, srcPath)
 
 	await linkBinFiles({
 		binFiles: params.binFiles,
@@ -35,14 +42,16 @@ export async function installPackage(params: InstallPackageParams): Promise<void
 			await removePackage(params)
 		},
 	})
+
+	checkBinInPath(params.packagesDir)
 }
 
 export async function removePackage(params: PackageParams): Promise<void> {
 	const packageDir = pathUtils.join(params.packagesDir, 'src', params.packageName.normalized)
 	const binOwners = await BinOwners.open(params.packagesDir)
 
-	await removeBinFiles({ binOwners, packageName: params.packageName })
-	await Deno.remove(packageDir, { recursive: true })
+	await removeBinFiles({ binOwners, packageName: params.packageName, packagesDir: params.packagesDir })
+	if (await dtils.exists(packageDir)) await Deno.remove(packageDir, { recursive: true })
 }
 
 export interface PackageName {
@@ -53,11 +62,14 @@ export interface PackageName {
 }
 
 export function parsePackageName(name: string): PackageName {
-	const sections = name.split('/').filter((section) => section.length)
+	const sections = name.toLowerCase().split('/').filter((section) => section.length)
 	if (sections.length < 2) throw new Error(`Invalid name, "${name}". Expected at least two sections of length separated by a slash`)
 
 	const lastSection = sections[sections.length - 1]
-	const version = lastSection.split('@')[1] || null
+	const versionSections = lastSection.split('@')
+	const version = versionSections[1] || null
+
+	sections[sections.length - 1] = versionSections[0]
 
 	return {
 		host: sections[0],

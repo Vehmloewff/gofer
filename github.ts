@@ -114,7 +114,7 @@ export class GithubHost implements Host {
 		const token = this.#getAuthToken()
 		if (token) headers.append('Authorization', `Bearer ${token}`)
 
-		const response = await fetch(`https://api.github.com${path}`, { method, body: body ? JSON.stringify(body) : null })
+		const response = await fetch(`https://api.github.com${path}`, { headers, method, body: body ? JSON.stringify(body) : null })
 		if (response.status === 404) return null
 
 		return response
@@ -158,7 +158,7 @@ export class GithubHost implements Host {
 		const matchedReleaseId = targetMatcher.getHighestRanked()
 		if (!matchedReleaseId) throw new Error('no generic release assets were found')
 
-		const response = await this.#sendRequestBasic('GET', `/repos/${user}/${repo}/releases/assets/${matchedReleaseId}`)
+		const response = await this.#sendRequestBasic('GET', `/repos/${user}/${repo}/releases/assets/${matchedReleaseId}`, null, true)
 		if (!response) throw new Error('internal error occurred because release asset just listed was not found')
 		if (!response.body) throw new Error('expected to find a response body from asset request')
 

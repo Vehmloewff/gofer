@@ -49,16 +49,21 @@ export async function linkBinFiles(params: LinkBinFilesParams): Promise<void> {
 	const binFiles = params.binFiles.length ? params.binFiles : await findBinFiles(srcDir)
 	if (!binFiles) throw new Error('No binary files were found')
 
+	const binDir = pathUtils.join(params.packagesDir, 'bin')
+	if (!await dtils.exists(binDir)) await Deno.mkdir(binDir, { recursive: true })
+
 	const linkedNames: string[] = []
 
 	for (const binFileIndex in binFiles) {
 		const binFile = binFiles[binFileIndex]
 		const name = params.names[binFileIndex] || pathUtils.basename(binFile)
-		const binLinkedPath = pathUtils.join(params.packagesDir, 'bin', name)
+		const binLinkedPath = pathUtils.join(binDir, name)
+
+		await Deno.chmod(binFile, 0o777)
 
 		// If we are overwriting an existing binary of a different package, ask the user if he wants to do this
 		const owner = params.binOwners.getOwner(name)
-		if (owner && owner !== params.packageName) {
+		if (owner && owner.normalized !== params.packageName.normalized) {
 			const canOverwrite = await askForOverwrite({
 				binOwners: params.binOwners,
 				name,
@@ -70,8 +75,10 @@ export async function linkBinFiles(params: LinkBinFilesParams): Promise<void> {
 			if (!canOverwrite) continue
 		}
 
-		await Deno.link(binFile, binLinkedPath)
-		linkedNames.push(binFile)
+		if (await dtils.exists(binLinkedPath)) await Deno.remove(binLinkedPath)
+		await Deno.symlink(binFile, binLinkedPath, { type: 'file' })
+
+		linkedNames.push(name)
 	}
 
 	if (!linkedNames.length) console.log('no binary files linked')
@@ -84,12 +91,14 @@ export async function linkBinFiles(params: LinkBinFilesParams): Promise<void> {
 }
 
 export interface RemoveBinFilesParams {
+	packagesDir: string
 	packageName: PackageName
 	binOwners: BinOwners
 }
 
 export async function removeBinFiles(params: RemoveBinFilesParams): Promise<void> {
 	const names = params.binOwners.getBinNames(params.packageName)
+	for (const name of names) await Deno.remove(pathUtils.join(params.packagesDir, 'bin', name)).catch()
 
 	await params.binOwners.removeBins(names)
 }
@@ -116,4 +125,21 @@ async function askForOverwrite(params: AskForOverwriteParams): Promise<boolean> 
 		console.log('Invalid option. Expected "o", "u", or "s"')
 		return await askForOverwrite(params)
 	}
+}
+
+export function checkBinInPath(packagesDir: string): void {
+	const localBinPath = pathUtils.join(packagesDir, 'bin')
+	const binPath = pathUtils.isAbsolute(localBinPath) ? localBinPath : pathUtils.join(Deno.cwd(), localBinPath)
+
+	const path = Deno.env.get('PATH')
+	if (!path) throw new Error("Couldn't locate PATH env variable")
+
+	const sections = path.split(':')
+	const linkedBinPath = !!sections.find((section) => section === binPath)
+	if (linkedBinPath) return
+
+	console.log(`It doesn\'t look like ${binPath} is in your PATH.`)
+	console.log('To use binaries installed with gofer, add the following to your .profile or similar:')
+	console.log(`  export PATH="${binPath}:$PATH"`)
+	console.log()
 }

@@ -62,10 +62,9 @@ function getOsScore(expectedOs: Os, name: string) {
 
 function isNameSpecial(name: string) {
 	const sections = name.split('.')
-	const extension = sections[1]
+	const extension = sections[sections.length - 1]
 
-	if (!extension) return false
-	if (extension !== 'zip' && extension !== 'tar' && extension !== 'gz') return false
+	if (!extension || extension === 'zip' || extension === 'tar' || extension === 'gz') return false
 
 	return true
 }

@@ -7,7 +7,10 @@
 	},
 	"lint": {
 		"rules": {
-			"include": ["no-external-import", "explicit-module-boundary-types"]
+			"include": [
+				"no-external-import",
+				"explicit-module-boundary-types"
+			]
 		}
 	}
 }
