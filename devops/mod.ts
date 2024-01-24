@@ -40,7 +40,7 @@ export async function build(): Promise<void> {
 	console.log(`Uploading assets to github release for tag "${tag}"...`)
 
 	const files = await dtils.recursiveReadDir(distDir).then((files) => files.filter((file) => file.endsWith('.tar.gz')))
-	// await dtils.sh(`gh release upload ${tag} ${files.join(' ')} --clobber`, { env: Deno.env.toObject() })
+	await dtils.sh(`gh release upload ${tag} ${files.join(' ')} --clobber`, { env: Deno.env.toObject() })
 }
 
 async function getLatestTag() {
