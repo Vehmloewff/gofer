@@ -20,7 +20,7 @@ export async function build(): Promise<void> {
 		const archive = new archiveUtils.Tar()
 
 		const binFilePath = pathUtils.join(distDir, crypto.randomUUID())
-		await dtils.sh(`deno compile -A --target ${target} --output ${binFilePath} cli/main.ts`)
+		await dtils.sh(`deno compile -A --target ${target} --output ${binFilePath} cli/main.ts version=${tag}`)
 
 		const binFileStat = await Deno.stat(binFilePath)
 		const binFile = await Deno.open(binFilePath, { read: true })
