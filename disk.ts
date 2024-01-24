@@ -29,6 +29,9 @@ export async function saveToDisk(stream: ReadableStream<Uint8Array>, path: strin
 		const tempFile = await Deno.open(tempFilePath, { write: true })
 
 		await ioUtils.copy(streamUtils.readerFromStreamReader(body.getReader()), tempFile)
+		const destinationDirName = pathUtils.dirname(destinationPath)
+
+		if (!await dtils.exists(destinationDirName)) await Deno.mkdir(destinationDirName, { recursive: true })
 		await zip.decompress(tempFilePath, destinationPath)
 	} else {
 		const entryName = path === '/' ? 'unknown' : pathUtils.basename(path)
