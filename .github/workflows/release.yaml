@@ -24,4 +24,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          deno run -A https://deno.land/x/dirt@1.0.0/main.ts --build --staging
+          deno run -A https://deno.land/x/dirt@1.0.0/main.ts --build --staging ${{ github.ref }}

@@ -8,8 +8,14 @@ export async function ci(): Promise<void> {
 	await dtils.check({ permissions: 'all' })
 }
 
-export async function build(): Promise<void> {
-	const tag = await getLatestTag()
+export async function build(args: string[]): Promise<void> {
+	const [ref] = args
+	if (!ref) throw new Error('Expected to receive a git ref as the first argument')
+
+	const prefix = 'refs/tags/'
+	if (!ref.startsWith(prefix)) throw new Error(`Expected a tag ref (${prefix}*), but found "${ref}"`)
+	const tag = ref.slice(prefix.length)
+
 	const targets = ['x86_64-unknown-linux-gnu', 'x86_64-apple-darwin', 'aarch64-apple-darwin']
 	const distDir = await Deno.makeTempDir()
 
@@ -41,10 +47,4 @@ export async function build(): Promise<void> {
 
 	const files = await dtils.recursiveReadDir(distDir).then((files) => files.filter((file) => file.endsWith('.tar.gz')))
 	await dtils.sh(`gh release upload ${tag} ${files.join(' ')} --clobber`, { env: Deno.env.toObject() })
-}
-
-async function getLatestTag() {
-	const text = await dtils.shCapture('git describe --tags --abbrev=0')
-
-	return text.logLines[0].trim()
 }
