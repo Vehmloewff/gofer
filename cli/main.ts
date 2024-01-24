@@ -1,8 +1,15 @@
 import { cliffy, gofer } from './deps.ts'
 
+const args = Deno.args
+
+// When compiling release binaries, the first script is embedded as `version=<version>` this isn't a valid flag, argument or command, so it's
+// safe to check for it. If an arg is specified that looks like it, parse out the version and remove it from the list of args
+let version = 'next'
+if (/^version=.+$/.test(args[0])) version = args.shift()!.slice(8) // remove the "version=" part
+
 await new cliffy.Command()
 	.name('gofer')
-	.version('0.1.0')
+	.version(version)
 	.description('Install packages from popular hosts')
 	.action(() => console.error('A command must be specified'))
 	.globalOption('-p, --packages-dir <string>', 'The directory where packages are downloaded. Defaults to ~/Packages')
