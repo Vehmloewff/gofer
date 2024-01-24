@@ -9,7 +9,7 @@ export async function ci(): Promise<void> {
 }
 
 export async function build(): Promise<void> {
-	const tag = getLatestTag()
+	const tag = await getLatestTag()
 	const targets = ['x86_64-unknown-linux-gnu', 'x86_64-apple-darwin', 'aarch64-apple-darwin']
 	const distDir = await Deno.makeTempDir()
 
@@ -40,7 +40,7 @@ export async function build(): Promise<void> {
 	console.log(`Uploading assets to github release for tag "${tag}"...`)
 
 	const files = await dtils.recursiveReadDir(distDir).then((files) => files.filter((file) => file.endsWith('.tar.gz')))
-	await dtils.sh(`gh release upload ${tag} ${files.join(' ')} --clobber`, { env: Deno.env.toObject() })
+	// await dtils.sh(`gh release upload ${tag} ${files.join(' ')} --clobber`, { env: Deno.env.toObject() })
 }
 
 async function getLatestTag() {
