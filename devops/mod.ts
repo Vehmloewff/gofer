@@ -14,6 +14,8 @@ export async function build(): Promise<void> {
 	const distDir = await Deno.makeTempDir()
 
 	for (const target of targets) {
+		console.log(`Building for target "${target}"...`)
+
 		const targetFilePath = pathUtils.join(distDir, `gofer-${target}.tar.gz`)
 		const archive = new archiveUtils.Tar()
 
@@ -35,7 +37,10 @@ export async function build(): Promise<void> {
 		await ioUtils.copy(compressedReader, targetFile)
 	}
 
-	await dtils.sh(`gh release upload ${tag} ${distDir}/gofer-*.tar.gz --clobber`, { env: Deno.env.toObject() })
+	console.log(`Uploading assets to github release for tag "${tag}"...`)
+
+	const files = await dtils.recursiveReadDir(distDir).then((files) => files.filter((file) => file.endsWith('.tar.gz')))
+	await dtils.sh(`gh release upload ${tag} ${files.join(' ')} --clobber`, { env: Deno.env.toObject() })
 }
 
 async function getLatestTag() {
